@@ -1,0 +1,396 @@
+protocol:
+  name: EdgeFoundry
+  version: "2.0"
+  revision: 2
+  document: docs/RESEARCH_PLAN.md
+  status: FROZEN
+  freeze_date: "2026-10-07"
+  freeze_tag: protocol-v2.0-frozen
+  freeze_tag_must_be_dated_before: "2027-01-01"
+  amendments: new protocol version and recorded reason required after the tag
+
+decisions:
+  D21:
+    status: APPROVED
+    approved_by: researcher
+    approved_on: "2026-10-07"
+    value: forward holdout 2027-01-01 00:00 to 2028-04-30 23:55 UTC
+  O5:
+    status: NOT_APPLIED
+    value: research period unchanged at 2025-09-30
+  O3:
+    status: RESOLVED_BY_DESIGN
+    value: retired window not used; prior_exposure recorded as UNKNOWN
+  D25:
+    status: VERIFIED
+  D26:
+    status: VERIFIED
+
+instrument:
+  exchange: Binance
+  symbol: BTCUSDT
+  market: USD-M linear perpetual
+  contract_type: perpetual
+  quote_margin_currency: USDT
+  leverage_convention: 1x notional
+  direction: long_only
+
+data_source:
+  ohlcv:
+    source: Binance public data archive, USD-M futures BTCUSDT 5m klines
+    verification: published checksums, sampled cross-check against REST klines endpoint
+    price_basis: last_trade_klines
+  funding:
+    source: Binance USD-M funding rate history (REST endpoint and archive), realized settlements
+  funding_schedule:
+    default_interval_hours: 8
+    default_settlements_utc: ["00:00", "08:00", "16:00"]
+    interval_can_change: true
+    interval_change_note: "Binance may change the interval: 1h when a settlement hits the cap or floor since 2025-05-02, with 4h reversion rules since 2026-01-02"
+    authoritative: realized settlement timestamps from the funding history
+    status: VERIFIED_FROM_OFFICIAL_PAGE
+    source: https://www.binance.com/en/support/faq/detail/360033525031
+    source_updated: "2026-03-06"
+    verified_on: "2026-10-07"
+    phase_1_check: "spacing between realized settlements must be 1h, 4h or 8h; any spacing over 8h counts as a missing settlement; every non-8h period is listed in the integrity report"
+  timezone: UTC
+  candle:
+    interval: 5m
+    label: open_time
+    coverage: "[open_time, open_time + 5 min)"
+  raw_data: read_only, never modified, source and download date recorded
+  missing_candles: never forward-filled; samples overlapping a gap excluded
+  warmup_candles: 288
+  holdout_data_acquisition: only after 2028-04-30 23:55 UTC (Section 15.3 Step 5)
+
+fee_tier:
+  tier: Regular user, USD-M
+  taker_bps: 5.0
+  applied_uniformly_across_history: true
+  preliminary_check:
+    date: "2026-10-07"
+    source: Binance futures fee support article, updated 2026-05-01
+  freeze_date_verification:
+    status: VERIFIED
+    source: "https://www.binance.com/en/support/faq/detail/360033544231 (updated 2026-05-01)"
+    date: "2026-10-07"
+  funding_schedule_verification:
+    status: VERIFIED
+    source: "https://www.binance.com/en/support/faq/detail/360033525031 (updated 2026-03-06)"
+    date: "2026-10-07"
+
+integrity_gate_g1:
+  scope: research period only
+  critical_checks:
+    - conflicting duplicate candles
+    - timestamp monotonicity, 5-minute alignment, UTC consistency
+    - "OHLC invariants: low <= min(open, close), high >= max(open, close), prices > 0, volume >= 0"
+    - any calendar week with more than 2% missing candles
+    - any calendar quarter with more than 0.5% missing candles
+    - any single gap over 6 hours without documented explanation
+    - "funding: spacing between realized settlements is 1h, 4h or 8h only; a spacing over 8h counts as a missing settlement; missing settlements at most 0.5% per quarter"
+  identical_duplicates: dropped and logged
+  abnormal_jumps: listed for review, not auto-corrected; exclusion rule decided in Phase 1 before any outcome result
+  data_version_freeze: SHA-256 of every dataset file recorded at G1
+
+dates:
+  research:
+    start: "2020-01-01T00:00:00Z"
+    end: "2025-09-30T23:55:00Z"
+  unused_interval:
+    start: "2025-10-01T00:00:00Z"
+    end: "2026-12-31T23:55:00Z"
+    use: excluded from training, calibration, selection, evaluation and holdout; not acquired in Phase 1
+  walk_forward:
+    test_block: one calendar quarter
+    training_window_months: 18
+    step_months: 3
+    outer_folds: 17
+    first_test_block: 2021-Q3
+    last_test_block: 2025-Q3
+    purge_candles: 14
+    embargo_candles: 288
+    dropped_per_training_sub_block: 302
+    shuffling: none
+  inner_split:
+    F: months 1-12, fit model
+    K: months 13-15, fit calibrator
+    V: months 16-18, choose theta
+    refit_after_theta: false
+
+holdout:
+  type: forward
+  start: "2027-01-01T00:00:00Z"
+  end: "2028-04-30T23:55:00Z"
+  length: 16 calendar months, 486 days
+  retired_window:
+    start: "2025-10-15T00:00:00Z"
+    end: "2026-09-30T23:55:00Z"
+    status: RETIRED, never used as holdout, unresolved prior exposure
+  unused_interval_ref: dates.unused_interval
+  postponement_rule: >
+    If G2 and the seal are not complete by 2026-12-15, the start moves to the first day
+    of a later calendar month and the length stays 16 calendar months. Amendment recorded
+    before the original start. Dates move only later, never earlier, never shortened or
+    extended, never changed for any reason other than schedule.
+  immutable_once_started: true
+  holdout_sealed_tag_must_be_dated_before: "2027-01-01"
+  single_use: true
+  burn_rule: failed or voided holdout is burned; new cycle needs fresh future data
+  void_conditions: any change to T*, artifacts, this config, the protocol, or evaluation-affecting code during the holdout
+  no_relaxation: no threshold relaxation, extension, shortening or resampling
+  no_statistics_before: single evaluation (Section 15.3 Step 6)
+  sealed_fit:
+    only_if: G2 passed
+    training_window: ["2024-04-01", "2025-09-30"]
+    F: ["2024-04-01", "2025-03-31"]
+    K: ["2025-04-01", "2025-06-30"]
+    V: ["2025-07-01", "2025-09-30"]
+    dropped_per_block: 302 candles
+    artifacts: [model, calibrator, theta_or_abstention]
+    seal: artifacts and SHA-256 hashes committed to registry and Git with annotated tag holdout-sealed
+    tag: holdout-sealed
+  procedure:
+    - freeze T* at G2
+    - sealed final fit on research-period data only
+    - seal and tag before holdout start
+    - waiting period 2027-01-01 to 2028-04-30, no changes, holdout data not downloaded or opened
+    - acquisition after 2028-04-30 23:55 UTC, plus 288 candles before 2027-01-01, structural checks only
+    - single batch evaluation, whole holdout as one block, Conservative costs, matched baselines
+    - decision H1-H5 after the full period
+  data_failure_rule: re-acquire once from alternate source; if still critical, INSUFFICIENT EVIDENCE (data) and holdout burned
+  cost_assumptions_during_holdout: freeze values apply; later fee or funding-schedule changes recorded as a note only
+  prior_exposure:
+    pre_freeze_work:
+      - description: earlier BTC bot backtest run around August 2026
+        date_range: UNKNOWN
+        what_was_done: UNKNOWN
+        files_verified: false
+      - description: BTC prices and charts viewed during this project and earlier research
+        date_range: UNKNOWN
+        what_was_done: viewed
+    consequences:
+      - retired window cannot be treated as untouched and is not used as holdout
+      - forward holdout starts after freeze and seal, so it cannot overlap earlier exposure by construction
+      - research period 2020-01-01 to 2025-09-30 may have been examined, including indicator choices; disclosed as a limitation, weakens no gate
+    editable_after_tag: false
+
+cost_model:
+  execution: taker only, no maker orders, no rebates, no BNB or VIP discounts
+  scenarios:
+    optimistic: {fee_bps_per_side: 5.0, half_spread_bps_per_side: 0.10, slippage_bps_per_side: 0.50, round_trip_bps: 11.2}
+    base: {fee_bps_per_side: 5.0, half_spread_bps_per_side: 0.25, slippage_bps_per_side: 1.00, round_trip_bps: 12.5}
+    conservative: {fee_bps_per_side: 5.0, half_spread_bps_per_side: 0.50, slippage_bps_per_side: 2.00, round_trip_bps: 15.0}
+  gating_scenario: conservative
+  spread_slippage: fixed assumptions, not estimated from data
+  size_impact: not modelled
+  fee_base: notional at entry and exit
+  funding:
+    convention: sum of realized settlement rates for settlement times T in [entry_fill_time, exit_fill_time)
+    bps: 1e4 * sum(rate_T)
+    sign: long pays when rate positive, credited when negative
+    applied_in: all three scenarios, tied to actual timestamp including permutations
+  net_pnl_bps: gross - fees - spread - slippage - funding
+  gross_pnl_bps: 1e4 * (exit_open / entry_open - 1)
+
+labels:
+  window_W_candles: 14
+  max_label_window_candles: 13
+  fh:
+    horizons_candles: [3, 6, 12]
+    gross_bps: 1e4 * (open[t+1+H] / open[t+1] - 1)
+    label_cost_threshold_bps: 15.0
+    y: 1 if gross_bps > 15.0 else 0
+  tb:
+    barriers_on: candle closes only
+    r_j: close[t+j] / open[t+1] - 1
+    barrier_width: B_t = k * sigma_t * sqrt(H_max)
+    sigma_t: std of 1-candle close-to-close log returns over trailing 288 candles ending at close of t
+    exit: open[t+j+1] at first j with r_j >= +B_t or r_j <= -B_t, else j = H_max
+    y: 1 iff upper barrier is hit first
+    h_max_candles_and_k: [[6, 1.0], [6, 1.5], [6, 2.0], [12, 1.0], [12, 1.5], [12, 2.0]]
+  no_other_horizons: true
+
+trade_rule:
+  entry: at close of t, if flat, sample eligible and calibrated p_t >= theta, enter long at open[t+1]
+  eligible: no missing candle in feature or label window, and t + W inside current evaluation block
+  position: one at a time, no pyramiding, no reversal, no scaling
+  signal_while_open: not evaluated
+  after_exit: first eligible signal at close of exit candle s, entry at open of s+1
+  exits:
+    fh: open[t+1+H], no stop, no target, no trailing
+    tb: as labels.tb
+  sizing:
+    notional_usdt: 10000
+    leverage: 1x
+    convention_only: true
+    compounding: none
+    metric_unit: bps per unit of notional
+  equity_curve: chronological cumulative sum of per-trade net bps
+  drawdown: peak-to-trough of that curve in bps, 100 bps = 1% of notional
+  qualifying_trade: entry fill and exit fill both inside the same evaluation block
+
+features:
+  fs_1:
+    - {name: ret_6, definition: "ln(close_t / close_{t-6})"}
+    - {name: body_ratio, definition: "(close_t - open_t) / max(high_t - low_t, eps)"}
+    - {name: ema_dist, definition: "close_t / EMA21(close)_t - 1"}
+    - {name: rsi_14, definition: "Wilder RSI, 14"}
+    - {name: rel_vol_48, definition: "volume_t / mean(volume over t-47..t)"}
+    - {name: atr_norm_14, definition: "ATR14_t / close_t (Wilder)"}
+  fs_2:
+    extends: fs_1
+    add:
+      - {name: roc_12, definition: "close_t / close_{t-12} - 1"}
+      - {name: roll_vol_48, definition: "std of 1-candle log returns over 48 candles"}
+      - {name: dist_high_48, definition: "close_t / max(high over t-47..t) - 1"}
+      - {name: dist_low_48, definition: "close_t / min(low over t-47..t) - 1"}
+  rules: trailing windows only, no fitted scaler, no data-driven feature selection, VWAP not a feature
+
+models:
+  common:
+    objective: binary:logistic
+    n_estimators: 300
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_lambda: 5
+    class_reweighting: none
+    early_stopping: none
+    hyperparameter_search: none
+    seed: 42
+  M-S: {max_depth: 3, min_child_weight: 50}
+  M-D: {max_depth: 5, min_child_weight: 20}
+
+calibration:
+  methods: [ISO, PLT]
+  ISO: isotonic
+  PLT: Platt scaling
+  fit_on: block K only
+
+threshold_method:
+  theta: pi_K + delta
+  pi_K: mean label on block K after purge
+  delta: [0.00, 0.02, 0.04, 0.06, 0.08, 0.10, 0.15]
+  discard_if: theta >= 1
+  evaluation: Section 6 trade protocol on block V under Conservative costs
+  min_qualifying_trades_on_V: 30
+  selection: eligible theta with highest mean net bps per trade, ties to higher theta
+  abstain_if: no eligible theta or best mean net bps <= 0 on V
+  never_tuned_on: test blocks or holdout
+
+baselines:
+  horizons_candles: [3, 6, 12]
+  fitted_parameters: none
+  B1: buy and hold across each test block, context only, not used in margin test
+  B2: long if close_t > close_{t-12}
+  B3: long if EMA21_t > EMA55_t and close_t > EMA21_t
+  B4: long if close_t > VWAP_t and at least 12 candles since 00:00 UTC; VWAP anchored to UTC day, typical price (H+L+C)/3, volume weighted
+  no_trade: implicit 0 bps baseline
+  b_star: best of B2-B4 at horizon matched to selected trial (H, or H_max for TB)
+  change_after_freeze: prohibited without new protocol version
+
+trials:
+  definition: one distinct fully specified ConfigID run over all 17 research folds against real outcomes
+  config_id_tuple: [label family and parameters, feature set, model, calibration, threshold grid and selection rule, trade rule, seed]
+  budget_total: 50
+  pre_registered: 48
+  reserved_bug_reruns: 2
+  grid_file: configs/trial_grid.yaml
+  grid_non_adaptive: true
+  seed: 42
+  counters: cumulative, never reset
+  counted: failed, crashed, aborted, invalid and discarded runs once executed against real research outcomes
+  not_counted: synthetic-data runs, unit tests, baselines, threshold selection, calibrator fitting
+  cost_scenarios: reporting views of one trial
+  outcome_free_feature_inspection: prohibited outside registered trials
+  rerun_rule: one identical rerun after a documented defect evidenced independently of performance metrics, documented before the rerun; consumes a budget slot; not a new ConfigID for the permutation null
+
+defect_audit:
+  status: APPROVED
+  applied: identically whatever the results look like, including when G2 passes
+  qualifying_evidence: [failing test, crash, data-alignment error, leakage error]
+  evidence_must_be: independent of the trial's performance metrics
+  documentation: before the rerun
+  unfavourable_results_qualify: never
+  published: both runs
+  fixed_in_registry_before: Phase 8
+  checklist:
+    - "failing unit test or crash"
+    - "timestamp or alignment error"
+    - "leakage-test failure"
+    - "cost or funding mismatch against a hand-computed trade"
+    - "non-reproducibility under a fixed seed"
+    - "config-hash mismatch"
+
+metric_and_selection:
+  primary_metric: pooled mean net P&L per qualifying trade, bps, Conservative costs including funding, trade-weighted over 17 test blocks
+  eligibility: at least 500 qualifying trades, else score -infinity
+  selection: eligible trial with highest M; ties to fewer features, then lower ConfigID
+  only_t_star_may_pass: true
+  runner_up_substitution: never
+  leaderboard: all executed trials published
+  metric_change_after_results: prohibited
+
+gates:
+  g2:
+    C1: {criterion: qualifying OOS trades pooled, op: ">=", value: 500}
+    C2: {criterion: expectancy M under Conservative costs, op: ">=", value: 2.0, unit: bps/trade}
+    C3: {criterion: "M minus M(B*) same protocol and costs", op: ">=", value: 2.0, unit: bps/trade}
+    C4: {criterion: "folds with positive Conservative net P&L, zero-trade folds not positive", op: ">=", value: 13, of: 17}
+    C5: {criterion: share of total net P&L from any single fold, op: "<=", value: 0.35}
+    C6: {criterion: max drawdown of pooled chronological equity curve, op: "<=", value: 2000, unit: bps}
+    C7: {criterion: "pooled OOS ECE, 10 equal-frequency bins, all eligible test candles", op: "<=", value: 0.05}
+    C8: {criterion: best-of-N permutation p, op: "<=", value: 0.05}
+    override: none
+  g3:
+    H1: {criterion: qualifying completed trades, op: ">=", value: 150}
+    H2: {criterion: M under Conservative costs, op: ">=", value: 2.0, unit: bps/trade}
+    H3: {criterion: one-sided 90% lower confidence bound on mean net bps, op: ">", value: 0}
+    H4: {criterion: "margin over best matched baseline, same protocol and costs", op: ">=", value: 2.0, unit: bps/trade}
+    H5: {criterion: max drawdown of cumulative net-bps curve, op: "<=", value: 1000, unit: bps}
+    outcomes:
+      H1_fails: INSUFFICIENT EVIDENCE
+      H2_to_H5_all_pass: PASS
+      any_of_H2_to_H5_fails: FAIL
+    h1_not_relaxed: true
+
+bootstrap:
+  applies_to: H3
+  method: block bootstrap over the trade sequence
+  block_size_trades: 10
+  resamples: 10000
+  confidence: one-sided 90% lower bound
+  seed:
+    value: 42
+    status: APPROVED
+
+permutation:
+  purpose: best-of-N null covering the whole executed trial set
+  outcome_path: "open[t+1+j] / open[t+1] and close[t+j] / open[t+1] for j = 1..12, from the real series"
+  permuted: assignment of outcome paths to candles only; features unchanged
+  blocks: UTC-day blocks of 288 candles aligned to 00:00 UTC
+  stratification: calendar quarter x weekday/weekend
+  shuffle: day-block order within each stratum, position p of day d receives outcome path of position p of day sigma(d)
+  fixed_under_permutation: funding tied to real timestamp, costs, walk-forward geometry, purge and embargo, TB sigma_t from the real candle
+  B: 200
+  reduce_B_silently: never; if impractical, stop and decide before Phase 8
+  per_permutation: retrain the complete pipeline for every executed ConfigID across all 17 folds
+  statistic: M_b = max over ConfigIDs of S_i_b, same eligibility and selection rule as metric_and_selection
+  p_value: (1 + count(M_b >= S_obs)) / (B + 1)
+  N: number of distinct ConfigIDs executed, never fewer than 48, cumulative on the same data
+  run_once: after all trials complete; cannot trigger new trials
+  holdout_permuted: never
+  seeds:
+    base_seed: 42
+    per_permutation: base_seed + b for b = 1..B
+    status: APPROVED
+
+synthetic_controls:
+  data: synthetic only, never real research outcomes
+  A_null: random walk with realistic volatility; pipeline plus permutation must give p > 0.05
+  B_planted_edge: planted component above conservative costs; must recover at least half
+  C_leak_injection: deliberate look-ahead feature must be flagged by leakage tests
+  phase_7_requires: all three pass
+
+claude_policy: Claude is outside every decision path; no signal generation or modification, trade selection, threshold tuning, winner choice, or holdout inspection before the single evaluation

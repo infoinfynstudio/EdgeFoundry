@@ -1,0 +1,257 @@
+grid_version: "2.0"
+protocol_ref: configs/protocol_v2_freeze.yaml
+status: FROZEN
+budget:
+  total: 50
+  pre_registered: 48
+  reserved_bug_reruns: 2
+non_adaptive: true
+enumeration_order: factors vary rightmost-fastest in the order written in Section 11.3; lower ConfigID breaks selection ties after fewer features
+common:
+  seed: 42
+  threshold_method: protocol_v2_freeze.yaml#threshold_method
+  trade_rule: protocol_v2_freeze.yaml#trade_rule
+  model_vectors: protocol_v2_freeze.yaml#models
+  feature_sets: protocol_v2_freeze.yaml#features
+  cost_scenarios: reporting views of one trial; Conservative is the gate
+trials:
+  - config_id: TR-FH-001
+    label: {family: FH, horizon_candles: 3}
+    feature_set: FS-1
+    model: M-S
+    calibration: ISO
+  - config_id: TR-FH-002
+    label: {family: FH, horizon_candles: 3}
+    feature_set: FS-1
+    model: M-S
+    calibration: PLT
+  - config_id: TR-FH-003
+    label: {family: FH, horizon_candles: 3}
+    feature_set: FS-1
+    model: M-D
+    calibration: ISO
+  - config_id: TR-FH-004
+    label: {family: FH, horizon_candles: 3}
+    feature_set: FS-1
+    model: M-D
+    calibration: PLT
+  - config_id: TR-FH-005
+    label: {family: FH, horizon_candles: 3}
+    feature_set: FS-2
+    model: M-S
+    calibration: ISO
+  - config_id: TR-FH-006
+    label: {family: FH, horizon_candles: 3}
+    feature_set: FS-2
+    model: M-S
+    calibration: PLT
+  - config_id: TR-FH-007
+    label: {family: FH, horizon_candles: 3}
+    feature_set: FS-2
+    model: M-D
+    calibration: ISO
+  - config_id: TR-FH-008
+    label: {family: FH, horizon_candles: 3}
+    feature_set: FS-2
+    model: M-D
+    calibration: PLT
+  - config_id: TR-FH-009
+    label: {family: FH, horizon_candles: 6}
+    feature_set: FS-1
+    model: M-S
+    calibration: ISO
+  - config_id: TR-FH-010
+    label: {family: FH, horizon_candles: 6}
+    feature_set: FS-1
+    model: M-S
+    calibration: PLT
+  - config_id: TR-FH-011
+    label: {family: FH, horizon_candles: 6}
+    feature_set: FS-1
+    model: M-D
+    calibration: ISO
+  - config_id: TR-FH-012
+    label: {family: FH, horizon_candles: 6}
+    feature_set: FS-1
+    model: M-D
+    calibration: PLT
+  - config_id: TR-FH-013
+    label: {family: FH, horizon_candles: 6}
+    feature_set: FS-2
+    model: M-S
+    calibration: ISO
+  - config_id: TR-FH-014
+    label: {family: FH, horizon_candles: 6}
+    feature_set: FS-2
+    model: M-S
+    calibration: PLT
+  - config_id: TR-FH-015
+    label: {family: FH, horizon_candles: 6}
+    feature_set: FS-2
+    model: M-D
+    calibration: ISO
+  - config_id: TR-FH-016
+    label: {family: FH, horizon_candles: 6}
+    feature_set: FS-2
+    model: M-D
+    calibration: PLT
+  - config_id: TR-FH-017
+    label: {family: FH, horizon_candles: 12}
+    feature_set: FS-1
+    model: M-S
+    calibration: ISO
+  - config_id: TR-FH-018
+    label: {family: FH, horizon_candles: 12}
+    feature_set: FS-1
+    model: M-S
+    calibration: PLT
+  - config_id: TR-FH-019
+    label: {family: FH, horizon_candles: 12}
+    feature_set: FS-1
+    model: M-D
+    calibration: ISO
+  - config_id: TR-FH-020
+    label: {family: FH, horizon_candles: 12}
+    feature_set: FS-1
+    model: M-D
+    calibration: PLT
+  - config_id: TR-FH-021
+    label: {family: FH, horizon_candles: 12}
+    feature_set: FS-2
+    model: M-S
+    calibration: ISO
+  - config_id: TR-FH-022
+    label: {family: FH, horizon_candles: 12}
+    feature_set: FS-2
+    model: M-S
+    calibration: PLT
+  - config_id: TR-FH-023
+    label: {family: FH, horizon_candles: 12}
+    feature_set: FS-2
+    model: M-D
+    calibration: ISO
+  - config_id: TR-FH-024
+    label: {family: FH, horizon_candles: 12}
+    feature_set: FS-2
+    model: M-D
+    calibration: PLT
+  - config_id: TR-TB-001
+    label: {family: TB, h_max_candles: 6, k: 1.0}
+    feature_set: FS-1
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-002
+    label: {family: TB, h_max_candles: 6, k: 1.0}
+    feature_set: FS-1
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-003
+    label: {family: TB, h_max_candles: 6, k: 1.0}
+    feature_set: FS-2
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-004
+    label: {family: TB, h_max_candles: 6, k: 1.0}
+    feature_set: FS-2
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-005
+    label: {family: TB, h_max_candles: 6, k: 1.5}
+    feature_set: FS-1
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-006
+    label: {family: TB, h_max_candles: 6, k: 1.5}
+    feature_set: FS-1
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-007
+    label: {family: TB, h_max_candles: 6, k: 1.5}
+    feature_set: FS-2
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-008
+    label: {family: TB, h_max_candles: 6, k: 1.5}
+    feature_set: FS-2
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-009
+    label: {family: TB, h_max_candles: 6, k: 2.0}
+    feature_set: FS-1
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-010
+    label: {family: TB, h_max_candles: 6, k: 2.0}
+    feature_set: FS-1
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-011
+    label: {family: TB, h_max_candles: 6, k: 2.0}
+    feature_set: FS-2
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-012
+    label: {family: TB, h_max_candles: 6, k: 2.0}
+    feature_set: FS-2
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-013
+    label: {family: TB, h_max_candles: 12, k: 1.0}
+    feature_set: FS-1
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-014
+    label: {family: TB, h_max_candles: 12, k: 1.0}
+    feature_set: FS-1
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-015
+    label: {family: TB, h_max_candles: 12, k: 1.0}
+    feature_set: FS-2
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-016
+    label: {family: TB, h_max_candles: 12, k: 1.0}
+    feature_set: FS-2
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-017
+    label: {family: TB, h_max_candles: 12, k: 1.5}
+    feature_set: FS-1
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-018
+    label: {family: TB, h_max_candles: 12, k: 1.5}
+    feature_set: FS-1
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-019
+    label: {family: TB, h_max_candles: 12, k: 1.5}
+    feature_set: FS-2
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-020
+    label: {family: TB, h_max_candles: 12, k: 1.5}
+    feature_set: FS-2
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-021
+    label: {family: TB, h_max_candles: 12, k: 2.0}
+    feature_set: FS-1
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-022
+    label: {family: TB, h_max_candles: 12, k: 2.0}
+    feature_set: FS-1
+    model: M-S
+    calibration: PLT
+  - config_id: TR-TB-023
+    label: {family: TB, h_max_candles: 12, k: 2.0}
+    feature_set: FS-2
+    model: M-S
+    calibration: ISO
+  - config_id: TR-TB-024
+    label: {family: TB, h_max_candles: 12, k: 2.0}
+    feature_set: FS-2
+    model: M-S
+    calibration: PLT
